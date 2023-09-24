@@ -1,10 +1,11 @@
 
+
 apiVersion: apps/v1  # Describes the version of your api server
 kind: Deployment    # Kubernetes resource kind we are creating / We are telling to Kubernetes here that this is the type of object that we are creating
 
 
 metadata:
-  name: article-app-deployment  # Name of the Deployment object
+  name: article-app-deploy  # Name of the Deployment object
 
 
 spec:
@@ -20,8 +21,8 @@ spec:
         app: article-app
     spec:
       containers:
-        - name: article-app
-          image: himsb/article-service-image:latest   # Image that will be used to containers in the k8s cluster
+        - name: article-appln-container
+          image: himsb/article-appln-image:1.0   # Image that will be used to containers in the k8s cluster
           imagePullPolicy: IfNotPresent            # Here, first it will check for the docker image in local and if not present, it will search in the Docker hub
           ports:
             - containerPort: 8080            # The port that the container is running on in the k8s cluster
@@ -29,42 +30,41 @@ spec:
           env:
             - name: MYSQL_USERNAME
               valueFrom:
-                secretKeyRef:
-                  name: mysql-secrets
-                  key: mysql-username
+                configMapKeyRef:
+                  name: mysql-config-map
+                  key: mysql-user-username
 
             - name: MYSQL_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: mysql-secrets
-                  key: mysql-password
+                  name: mysql-pass
+                  key: mysql-root-password
 
             - name: MYSQL_DB_NAME
               valueFrom:
                 configMapKeyRef:
-                  name: mysql-configmap
-                  key: mysql-db-name
+                  name: mysql-config-map
+                  key: mysql-database-name
 
 
             - name: MYSQL_HOST
               valueFrom:
                 configMapKeyRef:
-                  name: mysql-configmap
-                  key: mysql-host
-
-            - name: MYSQL_PORT
-              valueFrom:
-                configMapKeyRef:
-                  name: mysql-configmap
-                  key: mysql-port
+                  name: mysql-config-map
+                  key: mysql-database-host
 
 
       imagePullSecrets:
         - name: regcred
 
-
 # Note: We can give any name to this k8s-deployment.yaml file
 
+#######
+
+#kubectl create secret docker-registry regcred --docker-server=https://index.docker.io/v1/  --docker-username=himsb
+#--docker-password=Infy@2014 --docker-email=bectorhimanshu@gmail.com
+
+#######
 
 ---
 
@@ -75,7 +75,7 @@ kind: Service # Kubernetes resource kind we are creating
 
 
 metadata: # Metadata of the resource kind we are creating
-  name: article-app-service    # # Name of the Service object
+  name: article-app-svc    # # Name of the Service object
 
 
 spec:
@@ -85,7 +85,7 @@ spec:
     - protocol: "TCP"
       port: 8080           # The port that the service is running on in the k8s cluster
       targetPort: 8080     # The port exposed by the service
-  type: NodePort           # type of the service. / This means we can access our api with the help of Node IP and Node port
+  type: LoadBalancer           # type of the service. / This means we can access our api with the help of Node IP and Node port
 
 #  Different Service types are there - ClusterIP, LoadBalancer, NodePort
 
